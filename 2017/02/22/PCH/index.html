@@ -92,16 +92,16 @@ Q:为什么在XCode 6 版本之后创建工程ProjectName-Prefix.pch 默认取�
 <meta property="og:site_name" content="First Things First">
 <meta property="og:description" content="PCH–预编译头文件全称 (Precompiled Header)    程序设计时将头文件编译为中间格式，以节约开发过程中反复编译该头文件的开销。在开发过程中直接使用头文件的内容而不需要在去引用头文件，这样很大程度上带来了编程的便利性，提高效率。(中间形式称为预编译头文件)
 Q:为什么在XCode 6 版本之后创建工程ProjectName-Prefix.pch 默认取消了？A：认可的答案是说怀">
-<meta property="og:image" content="http://yoursite.com/Users/wonderc/Desktop/PCH_path.png">
-<meta property="og:image" content="http://yoursite.com/Users/wonderc/Desktop/WechatIMG4.jpeg">
-<meta property="og:image" content="http://yoursite.com/Users/wonderc/Desktop/WechatIMG2.jpeg">
-<meta property="og:image" content="http://yoursite.com/Users/wonderc/Desktop/WechatIMG3.jpeg">
-<meta property="og:updated_time" content="2017-02-22T08:06:45.000Z">
+<meta property="og:image" content="http://yoursite.com/Users/wonderc/Desktop/BLOG/source/image/PCH/PCH_path.png">
+<meta property="og:image" content="http://yoursite.com/Users/wonderc/Desktop/BLOG/source/image/PCH/YES.jpeg">
+<meta property="og:image" content="http://yoursite.com/Users/wonderc/Desktop/BLOG/source/image/PCH/VCNO.jpeg">
+<meta property="og:image" content="http://yoursite.com/Users/wonderc/Desktop/BLOG/source/image/PCH/ LoginNo.jpeg">
+<meta property="og:updated_time" content="2017-02-22T08:29:06.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS预编译头文件_PCH">
 <meta name="twitter:description" content="PCH–预编译头文件全称 (Precompiled Header)    程序设计时将头文件编译为中间格式，以节约开发过程中反复编译该头文件的开销。在开发过程中直接使用头文件的内容而不需要在去引用头文件，这样很大程度上带来了编程的便利性，提高效率。(中间形式称为预编译头文件)
 Q:为什么在XCode 6 版本之后创建工程ProjectName-Prefix.pch 默认取消了？A：认可的答案是说怀">
-<meta name="twitter:image" content="http://yoursite.com/Users/wonderc/Desktop/PCH_path.png">
+<meta name="twitter:image" content="http://yoursite.com/Users/wonderc/Desktop/BLOG/source/image/PCH/PCH_path.png">
 
 
 
@@ -337,14 +337,14 @@ Q:为什么在XCode 6 版本之后创建工程ProjectName-Prefix.pch 默认取�
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">I suspect because of modules, which remove the need for the #import &lt;Cocoa/Cocoa.h&gt;.</div><div class="line"></div><div class="line">As to where to put code that you would put in a prefix header, there is no code you should put in a prefix header.</div><div class="line">Put your imports into the files that need them. </div><div class="line">Put your definitions into their own files. Put your macros...nowhere. </div><div class="line">Stop writing macros unless there is no other way (such as when you need __FILE__). </div><div class="line">If you do need macros, put them in a header and include it.</div><div class="line"></div><div class="line">The prefix header was necessary for things that are huge and used by nearly everything in the whole system (like Foundation.h).</div><div class="line">If you have something that huge and ubiquitous, you should rethink your architecture. </div><div class="line">Prefix headers make code reuse hard, and introduce subtle build problems if any of the files listed can change. </div><div class="line">Avoid them until you have a serious build time problem that you can demonstrate is dramatically improved with a prefix header.</div><div class="line"></div><div class="line">In that case you can create one and pass it into clang, but it&apos;s incredibly rare that it&apos;s a good idea.</div><div class="line"></div><div class="line">EDIT: To your specific question about a HUD you use in all your view controllers, yes, you should absolutely import it into every view controller that actually uses it.</div><div class="line">This makes the dependencies clear. When you reuse your view controller in a new project (which is common if you build your controllers well), you will immediately know what it requires.</div><div class="line">This is especially important for categories, which can make code very hard to reuse if they&apos;re implicit.</div><div class="line"></div><div class="line">The PCH file isn&apos;t there to get rid of listing dependencies.</div><div class="line">You should still import UIKit.h or Foundation.h as needed, as the Xcode templates do. The reason for the PCH is to improve build times when dealing with really massive headers (like in UIKit).</div></pre></td></tr></table></figure>
 <h4 id="手动添加PCH文件"><a href="#手动添加PCH文件" class="headerlink" title="手动添加PCH文件"></a>手动添加PCH文件</h4><p>1、在Xcode中我们可以通过 <code>New file -&gt; Other-&gt; PCH file</code> 添加PCH文件</p>
 <p>2、<code>setting-&gt;prefix header-&gt;path</code> 设置PCH的路径 <code>($(SRCROOT)/filename.pch)</code> 如下：</p>
-<p><img src="/Users/wonderc/Desktop/PCH_path.png" alt="PCH_path"></p>
+<p><img src="/Users/wonderc/Desktop/BLOG/source/image/PCH/PCH_path.png" alt="PCH_path"></p>
 <h4 id="关于Precompile-Prefix-Header"><a href="#关于Precompile-Prefix-Header" class="headerlink" title="关于Precompile Prefix Header"></a>关于Precompile Prefix Header</h4><p>Precompile Prefix Header 设置为YES，PCH文件会被预编译处理，预编译后的文件会被缓存起来，从而提高编译速度。 </p>
 <p>查看编译日志截图：</p>
-<p><img src="/Users/wonderc/Desktop/WechatIMG4.jpeg" alt="YES"></p>
+<p><img src="/Users/wonderc/Desktop/BLOG/source/image/PCH/YES.jpeg" alt="YES"></p>
 <p>⚠️如果Precompile Prefix Header为NO，那么每个引用了pch内容的.m文件都要编译一次pch。</p>
 <p>查看编译日志截图：</p>
-<p><img src="/Users/wonderc/Desktop/WechatIMG2.jpeg" alt="LoginNO"></p>
-<p><img src="/Users/wonderc/Desktop/WechatIMG3.jpeg" alt="VCNO"></p>
+<p><img src="/Users/wonderc/Desktop/BLOG/source/image/PCH/VCNO.jpeg" alt="VCNO"></p>
+<p><img src="/Users/wonderc/Desktop/BLOG/source/image/PCH/ LoginNo.jpeg" alt=" LoginNo"></p>
 <p>参考地址如下：</p>
 <p><a href="http://www.cocoachina.com/ios/20140916/9635.html" target="_blank" rel="external">cocoachina</a>    <a href="https://zh.wikipedia.org/wiki/%E9%A2%84%E7%BC%96%E8%AF%91%E5%A4%B4" target="_blank" rel="external">维基百科</a>    <a href="http://stackoverflow.com/questions/24158648/why-isnt-projectname-prefix-pch-created-automatically-in-xcode-6" target="_blank" rel="external">stackoverflow</a></p>
 
