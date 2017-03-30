@@ -91,7 +91,7 @@
 <meta property="og:site_name" content="First Things First">
 <meta property="og:description" content="简单说一下Objective-C​    简单说一下Objective-C，它在C语言的基础上加入了面向对象的特性，同时还继承了SmallTalk的消息传递的特性。Objective-C会将编译和执行延迟到远行时。Objective-C中对象之间互相调用方法，可以看成对象之间互相传递消息，在对象发送消息后，所有消息的回应都会在运行时才会决定，并交给类别自行决定如何处理收到的消息。⚠️因此，一个类别">
 <meta property="og:image" content="http://yoursite.com/2017/03/30/Runtime/msgSend.png">
-<meta property="og:updated_time" content="2017-03-30T15:58:18.000Z">
+<meta property="og:updated_time" content="2017-03-30T16:02:20.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Runtime">
 <meta name="twitter:description" content="简单说一下Objective-C​    简单说一下Objective-C，它在C语言的基础上加入了面向对象的特性，同时还继承了SmallTalk的消息传递的特性。Objective-C会将编译和执行延迟到远行时。Objective-C中对象之间互相调用方法，可以看成对象之间互相传递消息，在对象发送消息后，所有消息的回应都会在运行时才会决定，并交给类别自行决定如何处理收到的消息。⚠️因此，一个类别">
@@ -392,29 +392,7 @@
 <p>​    把上面的代码放一起，你就能从一个类中获取它的属性啦：</p>
 <figure class="highlight objectivec"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">id</span> LenderClass = objc_getClass(<span class="string">"Lender"</span>);</div><div class="line"><span class="keyword">unsigned</span> <span class="keyword">int</span> outCount, i;</div><div class="line">objc_property_t *properties = class_copyPropertyList(<span class="keyword">class</span>, &amp;outCount);</div><div class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; outCount; i++) &#123;</div><div class="line">    objc_property_t property = properties[i];</div><div class="line">    fprintf(stdout, <span class="string">"%s %s\n"</span>, property_getName(property), property_getAttributes(property));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>​    对比下 <code>class_copyIvarList</code> 函数，使用 <code>class_copyPropertyList</code> 函数只能获取类的属性，而不包含成员变量。但此时获取的属性名是不带下划线的。</p>
-<h4 id="可以先看一下这篇-消息转发机制原理"><a href="#可以先看一下这篇-消息转发机制原理" class="headerlink" title="可以先看一下这篇 消息转发机制原理"></a>可以先看一下这篇 <a href="http://yulingtianxia.com/blog/2016/06/15/Objective-C-Message-Sending-and-Forwarding/" target="_blank" rel="external">消息转发机制原理</a></h4><h4 id="objc-msgSend函数消息发送过程："><a href="#objc-msgSend函数消息发送过程：" class="headerlink" title="objc_msgSend函数消息发送过程："></a>objc_msgSend函数消息发送过程：</h4><ul>
-<li><p>1、检测<code>selector</code>是不是要忽略</p>
-</li>
-<li><p>2、检测这个<code>target</code>是不是<code>nil</code>对象。</p>
-</li>
-<li><p>3、查找这个类的IMP，从<code>cache</code>里开始，找到跳到对应的函数执行。</p>
-</li>
-<li><p>4、<code>cache</code>中不存在，去方法列表中查找。</p>
-</li>
-<li><p>5、在类中的方法列表中找不到去类的父类的方法列表中查找，一直到<code>NSObject</code> 类为止。</p>
-</li>
-<li><p>6、如果还没有就要开始进入动态方法解析。</p>
-<p>​⚠️在此说明一下<code>objc_msgSend</code>, <code>objc_msgSend_stret</code>, <code>objc_msgSendSuper</code>, 或 <code>objc_msgSendSuper_stret</code>四个方法。传递给父类的用带有super的，返回值是数据结构的会调用带有“stret”的方法，当然这个是编译器要做的事情。objc_msgSend_fpret 会对浮点寄存器进行处理。</p>
-</li>
-</ul>
-<p>对于<code>[self class]</code> 和 <code>[super class]</code> 为什么返回的都是当前类？参考如下：</p>
-<p>而当方法中的<code>super</code>关键字接收到消息时，编译器会创建一个<code>objc_super</code>结构体：</p>
-<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> objc_super &#123; <span class="keyword">id</span> receiver; Class <span class="keyword">class</span>; &#125;;</div></pre></td></tr></table></figure>
-<p>​    这个结构体指明了消息应该被传递给特定超类的定义。但<code>receiver</code>仍然是<code>self</code>本身，这点需要注意，因为当我们想通过<code>[super class]</code>获取超类时，编译器只是将指向<code>self</code>的<code>id</code>指针和<code>class</code>的SEL传递给了<code>objc_msgSendSuper</code>函数，因为只有在<code>NSObject</code>类才能找到<code>class</code>方法，然后<code>class</code>方法调用<code>object_getClass()</code>，接着调用<code>objc_msgSend(objc_super-&gt;receiver, @selector(class))</code>，传入的第一个参数是指向<code>self</code>的<code>id</code>指针，与调用<code>[self class]</code>相同，所以我们得到的永远都是<code>self</code>的类型。</p>
-<h4 id="动态方法解析：动态方法解析会在消息转发机制进入之前执行。"><a href="#动态方法解析：动态方法解析会在消息转发机制进入之前执行。" class="headerlink" title="动态方法解析：动态方法解析会在消息转发机制进入之前执行。"></a>动态方法解析：动态方法解析会在消息转发机制进入之前执行。</h4><p>​    假如我们利用<code>@dynamic</code>来修饰一个 属性，这时编译器不会在为我们自动生成<code>get</code>和<code>set</code> 方法，而是需要我们自己来实现。我们可以通过重载<code>resolveInstanceMethod</code> <code>resolveClassMethod</code>来添加实例方法的实现和类方法实现。因为runtime在<code>Cache</code>和方法列表中找不到方法时，Runtime会调用 <code>resolveInstanceMethod</code>或者<code>resolveClassMethod</code>来给程序员一次动态添加方法实现的机会。我们需要使用<code>class_addMethod</code>函数完成特定类添加特定方法的操作。</p>
-<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> dynamicMethod(<span class="keyword">id</span> <span class="keyword">self</span>,SEL _cmd)&#123; <span class="comment">//implementation ...&#125;</span></div><div class="line"><span class="class"><span class="keyword">@implementation</span> <span class="title">MyClass</span></span></div><div class="line">+ (<span class="built_in">BOOL</span>)resolveInstanceMethod:(SEL)aSEL&#123;</div><div class="line">  <span class="keyword">if</span>(aSEL == <span class="keyword">@selector</span>(resolveThisMethodDynamically))&#123;</div><div class="line">    class_addMethod([<span class="keyword">self</span> <span class="keyword">class</span>],aSEL,(IMP)dynamicMethodIMP,<span class="string">@"v@:"</span>);</div><div class="line">    <span class="keyword">return</span> <span class="literal">YES</span>;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> [<span class="keyword">super</span> resolveInstanceMethod:aSEL];</div><div class="line">&#125;</div><div class="line"><span class="keyword">@end</span></div></pre></td></tr></table></figure>
-<p>​    <code>resolveThisMethodDynamically</code>是实现方式也就是’dynamicMethod’的方法中的代码，<code>v@:</code>代表返回值和参数可以查看<a href="https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html" target="_blank" rel="external">官方文档</a>。</p>
-<p>愿我们都可以站在巨人的肩膀来提升自我😄。</p>
+<p>​    Runtime运行时先看这些，愿我们都可以站在巨人的肩膀来提升自我😄。</p>
 <p>参考文献：</p>
 <p><a href="http://yulingtianxia.com/blog/2014/11/05/objective-c-runtime/" target="_blank" rel="external">http://yulingtianxia.com/blog/2014/11/05/objective-c-runtime/</a></p>
 <p><a href="http://www.cocoachina.com/ios/20141008/9844.html" target="_blank" rel="external">http://www.cocoachina.com/ios/20141008/9844.html</a></p>
@@ -573,7 +551,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#简单说一下Objective-C"><span class="nav-number">1.</span> <span class="nav-text">简单说一下Objective-C</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Runtime"><span class="nav-number">2.</span> <span class="nav-text">Runtime</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Runtime的交互方法"><span class="nav-number">3.</span> <span class="nav-text">Runtime的交互方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Runtime-术语"><span class="nav-number">4.</span> <span class="nav-text">Runtime 术语</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#可以先看一下这篇-消息转发机制原理"><span class="nav-number">5.</span> <span class="nav-text">可以先看一下这篇 消息转发机制原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#objc-msgSend函数消息发送过程："><span class="nav-number">6.</span> <span class="nav-text">objc_msgSend函数消息发送过程：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#动态方法解析：动态方法解析会在消息转发机制进入之前执行。"><span class="nav-number">7.</span> <span class="nav-text">动态方法解析：动态方法解析会在消息转发机制进入之前执行。</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#简单说一下Objective-C"><span class="nav-number">1.</span> <span class="nav-text">简单说一下Objective-C</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Runtime"><span class="nav-number">2.</span> <span class="nav-text">Runtime</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Runtime的交互方法"><span class="nav-number">3.</span> <span class="nav-text">Runtime的交互方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Runtime-术语"><span class="nav-number">4.</span> <span class="nav-text">Runtime 术语</span></a></li></ol></div>
             
 
           </div>
